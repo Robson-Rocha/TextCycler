@@ -25,6 +25,15 @@ namespace TextCycler
             Environment.Exit(-1);
         }
 
+        private static DateTime RoundToNearest(DateTime dt, TimeSpan d)
+        {
+            var delta = dt.Ticks % d.Ticks;
+            bool roundUp = delta > d.Ticks / 2;
+            var offset = roundUp ? d.Ticks : 0;
+
+            return new DateTime(dt.Ticks + offset - delta, dt.Kind);
+        }        
+
         static void Main(string[] args)
         {
             if (args.Length == 0)
@@ -111,6 +120,15 @@ namespace TextCycler
                     text = text.Replace($"#TIME+{i:00}#", DateTime.Now.AddMinutes(i).ToString("HH:mm"));
                 }
             }
+
+            if (Regex.IsMatch(text, @"#NTIME\+\d{2}#"))
+            {
+                for(int i = 1; i<=99; i++)
+                {
+                    text = text.Replace($"#NTIME+{i:00}#", RoundToNearest(DateTime.Now.AddMinutes(i), TimeSpan.FromMinutes(5)).ToString("HH:mm"));
+                }
+            }
+
 
             File.WriteAllText(config.targetFile, text, System.Text.Encoding.UTF8);
 
