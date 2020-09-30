@@ -10,18 +10,22 @@
 
     <Authors>RobsonROX</Authors>
     <Product>TextCycler</Product>
-    <Description>Utility cycle messages in text files, useful for OBS Streaming</Description>
-    <PackageIconUrl>https://github.com/Robson-Rocha/TextCycle/raw/master/docs/textcycle-nuget.png</PackageIconUrl>
+    <Description>Utility to cycle messages in text files, useful for OBS Streaming</Description>
+    <PackageIconUrl>https://github.com/Robson-Rocha/TextCycler/blob/master/docs/textcycle-nuget.png?raw=true</PackageIconUrl>
     <RepositoryUrl></RepositoryUrl>
-    <PackageProjectUrl>https://github.com/robson-rocha/textcycle</PackageProjectUrl>
+    <PackageProjectUrl>https://github.com/robson-rocha/TextCycler</PackageProjectUrl>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-    <Copyright>Copyright ©2019 Robson Rocha de Araújo</Copyright>
-    <PackageLicenseUrl>https://github.com/Robson-Rocha/TextCycle/blob/master/LICENSE</PackageLicenseUrl>
+    <Copyright>Copyright ©2020 Robson Rocha de Araújo</Copyright>
+    <PackageLicenseUrl>https://github.com/Robson-Rocha/TextCycler/blob/master/LICENSE</PackageLicenseUrl>
     <PackageTags>tool, text, cycle, obs</PackageTags>
     <Company>Robson Rocha de Araújo</Company>
-    <AssemblyVersion>1.0.0</AssemblyVersion>
-    <Version>1.0.0</Version>    
+    <AssemblyVersion>1.0.1</AssemblyVersion>
+    <Version>1.0.1</Version>    
 
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="McMaster.Extensions.CommandLineUtils" Version="3.0.0" />
+  </ItemGroup>
 
 </Project>
