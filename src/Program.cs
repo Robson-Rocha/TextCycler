@@ -80,6 +80,10 @@ namespace TextCycler
                 ValueName = "Interval in seconds between each cycle", Description = "Automatically cycle the texts, pausing for the specified interval.")]
         public int? CycleInterval { get; set; }
 
+        [Option(CommandOptionType.NoValue, ShortName = "p", LongName = "prompt", ShowInHelpText = true,
+                Description = "Prompts for text.")]
+        public bool PromptForText { get; set; }
+
         [System.Diagnostics.CodeAnalysis.SuppressMessage("CodeQuality", "IDE0051:Remove unused private members", Justification = "Used implicitly by CommandLineApplication.Execute")]
         private void OnExecute()
         {
@@ -122,12 +126,12 @@ namespace TextCycler
                 Fail($"The config file could not be parsed, or has errors: '{ex.Message}'");
             }
             
-            if (config.texts.Length == 0)
+            if (config.texts.Length == 0 && !PromptForText)
             {
                 Fail($"At least one text must be defined in the 'texts' array at the config file.");
             }
 
-            if (TextIndex != null)
+            if (TextIndex != null && !PromptForText)
             {
                 if (TextIndex > config.texts.Length-1)
                 {
@@ -183,7 +187,16 @@ namespace TextCycler
 
             do
             {
-                string text = config.texts[TextIndex ?? config.nextTextIndex ?? 0];
+                string text = null;
+                if (PromptForText)
+                {
+                    Console.Write("Enter your text: ");
+                    text = Console.ReadLine();
+                }
+                else
+                {
+                    text = config.texts[TextIndex ?? config.nextTextIndex ?? 0];
+                }
 
                 if (config.sequencePositions == null)
                 {
@@ -314,7 +327,7 @@ namespace TextCycler
 
                 File.WriteAllText(TargetFile, text, System.Text.Encoding.UTF8);
 
-                if (TextIndex == null)
+                if (!PromptForText && TextIndex == null)
                 {
                     config.nextTextIndex++;
                     if (config.nextTextIndex == config.texts.Length)

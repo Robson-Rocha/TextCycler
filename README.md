@@ -96,6 +96,10 @@ Which, given the above configuration file, will output the following text to the
 
 Overriding the text index does not change the next text index.
 
+#### Entering text manually
+
+In cases that you need to set some text ad-hoc, you can use the `-p` or `--prompt` option. TextCycler will ask on the console for the desired text. This is useful when you need to display some unplanned text.
+
 #### Overriding `targetFile`
 
 If you want to override the targetFile section, or simply prefer to provide its path in the command line, you can use the `-f` or  `--targetFile` option:
