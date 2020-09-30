@@ -1,4 +1,6 @@
-# <img src="docs/textcycle-nuget.png" style="width: 125px" />  TextCycler 
+<img align="left" src="docs/textcycle-nuget.png" width="150" />
+
+# TextCycler 
 TextCycler is a simple command line tool for cycling texts and perform some sequence and time replacements on the text, useful for OBS Streamings, or in any application which you can read the value of a text file (and is capable of detecting the changes of the text file).
 
 ## Requirements
