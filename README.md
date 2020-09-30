@@ -13,10 +13,16 @@ To install .NET Core 3.1, [click here](https://dotnet.microsoft.com/download/dot
 To install TextCycler, in your preferred terminal, use the following command:
 
 ```bash
-dotnet tool install --global TextCycler --version 1.0.1
+dotnet tool install -g TextCycler
 ```
 
-See the releases section for the current version, or symply check at NuGet.org for the current version [clicking here](https://www.nuget.org/packages/TextCycler).
+You can check at NuGet.org for the current version [clicking here](https://www.nuget.org/packages/TextCycler).
+
+To ensure you are running the latest version, you can run the following command to update TextCycler:
+
+```bash
+dotnet tool update -g TextCycler
+```
 
 ## Usage
 
