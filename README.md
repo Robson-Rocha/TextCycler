@@ -34,7 +34,10 @@ After installation, and before you can use TextCycler, you'll need to create a J
 textcycler -c config.json --generateConfig
 ```
 
-This will create a config.json file in the current directory. You can specify the full path of the config.json in the `-c` or `--configFile` option, and it can have any name you prefer. Think of this config file as a 'Profile', in which you can have multiple profiles for different occasions.
+This will create a config.json file in the current directory.
+
+You can specify the full path of the config.json in the `-c` or `--configFile` option, and it can have any name you prefer. Think of this config file as a 'Profile', in which you can have multiple profiles for different occasions.
+
 It's recommended that you save this config file in an easily accessible path.
 
 The initial config file looks like the following:
