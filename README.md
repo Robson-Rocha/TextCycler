@@ -1,4 +1,4 @@
-# <img src="docs/textcycle-nuget.png" style="zoom:25%;" />  TextCycler 
+# <img src="docs/textcycle-nuget.png" style="width: 125px" />  TextCycler 
 TextCycler is a simple command line tool for cycling texts and perform some sequence and time replacements on the text, useful for OBS Streamings, or in any application which you can read the value of a text file (and is capable of detecting the changes of the text file).
 
 ## Requirements
@@ -172,3 +172,46 @@ The time can also be set in 12 hours format:
 textcycler -c config.json -i 1 -t 7:00PM
 ```
 
+### Using Auto Cycling
+
+Supposing that you want to continuously cycle through your list of texts, you can use the `-a` ou `--autoCycle` option to specify an interval of seconds between cyclings. 
+
+The following command will write each text in the config file at every 60 seconds, until you press the break key combination (CTRL+C in windows).
+
+```bash
+textcycler -c config.json -a 60
+```
+
+## Usage with OBS
+
+In OBS, you can set the source of any text element to a text file. OBS always "watches" for content changes in the file every second or so.
+
+![](docs/obs-01.png)
+
+1. Add a "Text (GDI+)" source to your scene
+2. Right-click the text source, and click "Properties"
+3. At the properties window, check the "Read from File" option
+4. Click "Browse" and select the text file that will provide the text for your "Text (GDI+)" source. Be sure to use the same path of the `"targetFile"` you provided in TextCycler
+5. Click "OK"
+
+Now, every time you change the text in the text file you provided at step 4 using TextCycler, it will automatically refresh your scene with the updated text. 
+
+Keep in mind that OBS can take one second or so to update the "Text (GDI+)" source with the written text.
+
+## Automating text changes
+
+Being a simple console application, TextCycler will do half of the job: you'll still need a convenient way to run it while you are streaming. But it is simple enough to be easy to integrate in multiple ways.
+
+### Using StreamDeck
+
+StreamDeck is a perfect option to trigger the text cycling or transformations. With StreamDeck, you can use the "System > Open" action to run TextCycler. Just be sure to use the full path of the config file in the `-c` option and in the `targetFile` or `-f` option for the target file.
+
+![](docs/streamdeck-01.png)
+
+### Using Hot Keys
+
+You can create hotkeys in many ways. In Windows you can resource to .lnk files (Shortcut Files), but it is cumbersome to create and mantain. A great approach is to use a "hotkey automator" tool like those below. They can require some configuration, but usually launch an application is a trivial task.
+
+- [AutoHotKey (Windows)](https://www.autohotkey.com/)
+- [HammerSpoon (Mac)](http://www.hammerspoon.org/)
+- [AutoKey (Linux)](https://github.com/autokey/autokey)
