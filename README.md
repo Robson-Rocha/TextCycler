@@ -128,9 +128,9 @@ textcycler -c config.json -f somefile.txt
 
 Sequences are a useful feature which allow you to use sequences of text, which will be applied in sequentially each time a text is written to the target file.
 
-The configuration file shown above depicts a `"sequences"` section, which consists of an array of text arrays. Each text array represents the texts that will be replaced in the text, using a special **`##SEQUENCE_NN##`** sequence replacement token in the text, where `NN` stands for the index of the sequence value. As each index always start with zero, you can provide up to 100 values for each sequence. The values of a sequence can be any text.
+The configuration file shown above depicts a `"sequences"` section, which consists of an array of text arrays. Each text array represents the texts that will be replaced in the text, using a special **`#SEQUENCE_NN#`** sequence replacement token in the text, where `NN` stands for the index of the sequence value. As each index always start with zero, you can provide up to 100 values for each sequence. The values of a sequence can be any text.
 
-For example, the third text in the above configuration file includes the `##SEQUENCE_00##` replacement token, which represents the value for the first sequence of values. If you execute the command below three times, to write specifically the third text to the target file:
+For example, the third text in the above configuration file includes the `#SEQUENCE_00#` replacement token, which represents the value for the first sequence of values. If you execute the command below three times, to write specifically the third text to the target file:
 
 ```bash
 textcycler -c config.json -i 3
@@ -144,7 +144,7 @@ It will produce the following texts after each time the TextCycler is executed:
 
 `Third Text, with the sequence 0 (03) from 01 to 05`
 
-The same will apply if you simply cycle through all the texts. Each time that the `##SEQUENCE_00##` is replaced, it will get the next value in the sequence, going back to the first value after the last value is replaced.
+The same will apply if you simply cycle through all the texts. Each time that the `#SEQUENCE_00#` is replaced, it will get the next value in the sequence, going back to the first value after the last value is replaced.
 
 It is important to note that the sequence cycling occurs only after all the replacements. So using the same replacement token multiple times in the same text will produce the same value.
 
@@ -168,17 +168,17 @@ Overriding a sequence value does not change the next index for the sequence.
 
 Time Replacement Tokens are useful to output the current time into the written text. 
 
-There are two time basic replacement tokens: **`##TIME##`**, which outputs the current time in the 24 hours format, and **`##TIME12##`**, which outputs the current time in 12 hours format (including AM/PM).
+There are two time basic replacement tokens: **`#TIME#`**, which outputs the current time in the 24 hours format, and **`#TIME12#`**, which outputs the current time in 12 hours format (including AM/PM).
 
-If you want the time to be rounded to the nearest 5 minutes, you can use the **`##NTIME##`** and **`##NTIME12##`** variants.
+If you want the time to be rounded to the nearest 5 minutes, you can use the **`#NTIME#`** and **`#NTIME12#`** variants.
 
 #### Adding or subtracting minutes to the time
 
-You can also add or subtract minutes to the time, using the **`##TIME+XX##`**, **`##TIME12+XX##`**, **`##NTIME+XX##`**, **`##NTIME12+XX##`**, **`##TIME-XX##`**, **`##TIME12-XX##`**, **`##NTIME-XX##`** and **`##NTIME12-XX##`**,  variants, where `XX` stands for the number of minutes to add or subtract, from 0 to 99 minutes.
+You can also add or subtract minutes to the time, using the **`#TIME+XX#`**, **`#TIME12+XX#`**, **`#NTIME+XX#`**, **`#NTIME12+XX#`**, **`#TIME-XX#`**, **`#TIME12-XX#`**, **`#NTIME-XX#`** and **`#NTIME12-XX#`**,  variants, where `XX` stands for the number of minutes to add or subtract, from 0 to 99 minutes.
 
 It is useful in situations when you must consider a different time zone, or wants to generate a message like "Live Transmission will start at 19:00!", based on your computer time.
 
-You can even combine the Time Replacement Tokens with the Sequence Replacement Tokens, i.e. **`##NTIME+##SEQUENCE_00####`**, where the number of minutes to be added comes from the replacement token **`##SEQUENCE_00##`**. Pay attention to the hash count, every replacement token starts with two hashes and end with another two, and that the sequence value must be numeric, or else the time replacement token could not be recognized.
+You can even combine the Time Replacement Tokens with the Sequence Replacement Tokens, i.e. **`#NTIME+#SEQUENCE_00##`**, where the number of minutes to be added comes from the replacement token **`#SEQUENCE_00#`**. Pay attention to the hash count, every replacement token starts with one hash and end with another one, and that the sequence value must be numeric, or else the time replacement token could not be recognized.
 
 #### Overriding the current time
 

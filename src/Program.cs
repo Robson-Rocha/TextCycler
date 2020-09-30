@@ -256,7 +256,7 @@ namespace TextCycler
                 {
                     for (int i = 1; i <= 99; i++)
                     {
-                        text = text.Replace($"#NTIME+{i}#", RoundToNearest(currentTime.AddMinutes(-i), TimeSpan.FromMinutes(5)).ToString("HH:mm"));
+                        text = text.Replace($"#NTIME+{i}#", RoundToNearest(currentTime.AddMinutes(i), TimeSpan.FromMinutes(5)).ToString("HH:mm"));
                         text = text.Replace($"#NTIME+{i:00}#", RoundToNearest(currentTime.AddMinutes(i), TimeSpan.FromMinutes(5)).ToString("HH:mm"));
                     }
                 }
@@ -302,7 +302,7 @@ namespace TextCycler
                 {
                     for (int i = 1; i <= 99; i++)
                     {
-                        text = text.Replace($"#NTIME12+{i}#", RoundToNearest(currentTime.AddMinutes(-i), TimeSpan.FromMinutes(5)).ToString("hh:mmtt"));
+                        text = text.Replace($"#NTIME12+{i}#", RoundToNearest(currentTime.AddMinutes(i), TimeSpan.FromMinutes(5)).ToString("hh:mmtt"));
                         text = text.Replace($"#NTIME12+{i:00}#", RoundToNearest(currentTime.AddMinutes(i), TimeSpan.FromMinutes(5)).ToString("hh:mmtt"));
                     }
                 }

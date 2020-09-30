@@ -19,8 +19,8 @@
     <PackageLicenseUrl>https://github.com/Robson-Rocha/TextCycler/blob/master/LICENSE</PackageLicenseUrl>
     <PackageTags>tool, text, cycle, obs</PackageTags>
     <Company>Robson Rocha de Araújo</Company>
-    <AssemblyVersion>1.0.2</AssemblyVersion>
-    <Version>1.0.2</Version>    
+    <AssemblyVersion>1.0.3</AssemblyVersion>
+    <Version>1.0.3</Version>    
 
   </PropertyGroup>
 
