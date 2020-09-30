@@ -214,6 +214,10 @@ StreamDeck is a perfect option to trigger the text cycling or transformations. W
 
 ![](docs/streamdeck-01.png)
 
+If you want to customize the button icon, you can use this icon:
+
+![](docs/textcycler-obs.png)
+
 ### Using Hot Keys
 
 You can create hotkeys in many ways. In Windows you can resource to .lnk files (Shortcut Files), but it is cumbersome to create and mantain. A great approach is to use a "hotkey automator" tool like those below. They can require some configuration, but usually launch an application is a trivial task.
