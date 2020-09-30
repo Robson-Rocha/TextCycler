@@ -26,17 +26,18 @@ dotnet tool update -g TextCycler
 
 ## Usage
 
-### Creating the JSON configuration file
+### Creating the JSON config file
 
-After installation, and before you can use TextCycler, you'll need to create a JSON configuration file. You can create a starter template with the following command in your preferred terminal:
+After installation, and before you can use TextCycler, you'll need to create a JSON config file. You can create a starter template with the following command in your preferred terminal:
 
 ```bash
 textcycler -c config.json --generateConfig
 ```
 
-This will create a config.json file in the current directory. You can specify the full path of the config.json in the `-c` or `--configFile` option, and it can have whatever name you prefer. Think of this config file as a 'Profile', in which you can have multiple profiles for different occasions.
+This will create a config.json file in the current directory. You can specify the full path of the config.json in the `-c` or `--configFile` option, and it can have any name you prefer. Think of this config file as a 'Profile', in which you can have multiple profiles for different occasions.
+It's recommended that you save this config file in an easily accessible path.
 
-The initial configuration file resembles the following:
+The initial config file looks like the following:
 
 ```json
 {
@@ -64,7 +65,7 @@ The initial configuration file resembles the following:
 }
 ```
 
-### Setting your texts in the configuration file
+### Setting your texts in the config file
 
 TextCycler works setting the text in one of the array entries in the `"texts"` section into the file specified in the `"targetFile"` section, each time you use the following command:
 
@@ -86,7 +87,7 @@ This way, given the above configuration files, executing TextCycler three times 
 
 `Third Text, with the counter 0 (01) from 1 to 5`
 
-We will discuss about the replacement tokens for time and counters shortly.
+We will discuss about the sequence replacement tokens and time replacement tokens shortly.
 
 #### Overriding `nextTextIndex` 
 
@@ -174,7 +175,7 @@ You can also add or subtract minutes to the time, using the **`##TIME+XX##`**, *
 
 It is useful in situations when you must consider a different time zone, or wants to generate a message like "Live Transmission will start at 19:00!", based on your computer time.
 
-You can even combine the Time Replacement Tokens with the Sequence Replacement Tokens, i.e. **`##NTIME+##SEQUENCE_00####`**, where the number of minutes to be added comes from the replacement token **##SEQUENCE_00##**. Pay attention to the hash count, every replacement token starts with two hashes and end with another two, and that the sequence value must be numeric, or else the time replacement token could not be recognized.
+You can even combine the Time Replacement Tokens with the Sequence Replacement Tokens, i.e. **`##NTIME+##SEQUENCE_00####`**, where the number of minutes to be added comes from the replacement token **`##SEQUENCE_00##`**. Pay attention to the hash count, every replacement token starts with two hashes and end with another two, and that the sequence value must be numeric, or else the time replacement token could not be recognized.
 
 #### Overriding the current time
 
