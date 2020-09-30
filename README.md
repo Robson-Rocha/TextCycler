@@ -100,6 +100,12 @@ Overriding the text index does not change the next text index.
 
 In cases that you need to set some text ad-hoc, you can use the `-p` or `--prompt` option. TextCycler will ask on the console for the desired text. This is useful when you need to display some unplanned text.
 
+```bash
+textcycler -c config.json -p
+Enter your text: Lorem ipsum dolor
+The text 'Lorem ipsum dolor' was written to 'targetfile.txt'
+```
+
 #### Overriding `targetFile`
 
 If you want to override the targetFile section, or simply prefer to provide its path in the command line, you can use the `-f` or  `--targetFile` option:
