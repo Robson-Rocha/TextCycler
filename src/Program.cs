@@ -131,12 +131,9 @@ namespace TextCycler
                 Fail($"At least one text must be defined in the 'texts' array at the config file.");
             }
 
-            if (TextIndex != null && !PromptForText)
+            if (TextIndex != null && !PromptForText && TextIndex > config.texts.Length-1)
             {
-                if (TextIndex > config.texts.Length-1)
-                {
-                    Fail($"As you have {config.texts.Length} texts defined in the supplied config file, the index, if supplied, must be between 0 and {config.texts.Length -1}.");
-                }
+                Fail($"As you have {config.texts.Length} texts defined in the supplied config file, the index, if supplied, must be between 0 and {config.texts.Length -1}.");
             }
 
             TargetFile = TargetFile ?? config.targetFile;
