@@ -12,16 +12,27 @@ namespace TextCycler
             config.ConfigPath = path;
             return config;
         }
-        
-        public int? nextTextIndex { get; set; }
 
-        public string[] texts { get; set; }
+        [JsonPropertyName("nextTextIndex")]
+        public int? NextTextIndex { get; set; }
 
-        public string[][] sequences { get; set; }
+        [JsonPropertyName("texts")]
+        public string[] Texts { get; set; }
 
-        public int[] sequencePositions { get; set; }
+        [JsonPropertyName("sequences")]
+        public string[][] Sequences { get; set; }
 
-        public string targetFile { get; set; }
+        [JsonPropertyName("sequencePositions")]
+        public int[] SequencePositions { get; set; }
+
+        [JsonPropertyName("targetFile")]
+        public string TargetFile { get; set; }
+
+        [JsonPropertyName("lastWrittenText")]
+        public string LastWrittenText { get; set; }
+
+        [JsonPropertyName("lastTextIndexUsedInMenu")]
+        public int? LastTextIndexUsedInMenu { get; set; }
 
         [JsonIgnore]
         public string ConfigPath { get; set; }

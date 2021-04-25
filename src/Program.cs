@@ -1,3 +1,4 @@
+using McMaster.Extensions.CommandLineUtils;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -6,54 +7,14 @@ using System.Linq;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading;
-using McMaster.Extensions.CommandLineUtils;
 
 namespace TextCycler
 {
-
-    class Program
+    public class Program
     {
-        static private void Fail(string message)
-        {
-            var currentConsoleColor = Console.ForegroundColor;
-            Console.ForegroundColor = ConsoleColor.Red;
-            System.Console.WriteLine(message);
-            Console.ForegroundColor = currentConsoleColor;
-            Environment.Exit(-1);
-        }
-
-        static private void Succeed(string message, bool exitImmediately = true)
-        {
-            var currentConsoleColor = Console.ForegroundColor;
-            Console.ForegroundColor = ConsoleColor.Blue;
-            System.Console.WriteLine(message);
-            Console.ForegroundColor = currentConsoleColor;
-            if (exitImmediately)
-                Environment.Exit(0);
-        }
-
-        private static DateTime RoundToNearest(DateTime dt, TimeSpan d)
-        {
-            var delta = dt.Ticks % d.Ticks;
-            bool roundUp = delta > d.Ticks / 2;
-            var offset = roundUp ? d.Ticks : 0;
-
-            return new DateTime(dt.Ticks + offset - delta, dt.Kind);
-        }
-
-        private static bool WaitNextCycle(int? interval)
-        {
-            if (interval == null)
-                return false;
-            Thread.Sleep(interval.Value * 1000);
-            return true;
-        }
-
-        static void Main(string[] args)
-            => CommandLineApplication.Execute<Program>(args);
-
+        #region Public Properties for Command Options
         [Required]
-        [Option(CommandOptionType.SingleValue, ShortName = "c", LongName = "configFile", ShowInHelpText = true, 
+        [Option(CommandOptionType.SingleValue, ShortName = "c", LongName = "configFile", ShowInHelpText = true,
                 ValueName = "Path to the JSON config file", Description = "The config file to be used. To generate a blank config file, use the --generateConfig option with this option, and a blank config file will be generated in this path.")]
         public string ConfigFile { get; set; }
 
@@ -84,8 +45,73 @@ namespace TextCycler
                 Description = "Prompts for text.")]
         public bool PromptForText { get; set; }
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("CodeQuality", "IDE0051:Remove unused private members", Justification = "Used implicitly by CommandLineApplication.Execute")]
-        private void OnExecute()
+        [Option(CommandOptionType.MultipleValue, ShortName = "v", LongName = "variable", ShowInHelpText = true,
+                ValueName = "{VariableName}[:{DefaultValue}]", Description = "Asks for the value of a variable, which can be used in a replacement token in the format #VARIABLE_NAME#. Optionally, you can provide a default value to the variable, which will be displayed at prompt, using a colon after the variable name, and providing the value after that colon.")]
+        public string[] Variables { get; set; }
+
+        [Option(CommandOptionType.MultipleValue, ShortName = "vv", LongName = "variableValue", ShowInHelpText = true,
+                ValueName = "{VariableName}:{Value}", Description = "Sets the value of a variable, which can be used in a replacement token in the format #VARIABLE_NAME#. You must provide the value for the variable using a colon after the variable name, and providing the value after that colon.")]
+        public string[] VariablesValues { get; set; }
+
+        [Option(CommandOptionType.SingleValue, ShortName = "d", LongName = "delay", ShowInHelpText = true,
+                ValueName = "Delay to be waited for after setting the target file text, in seconds", Description = "If defined, waits for the specified number of seconds after setting the target file. Useful for letting the result message be read.")]
+        public int? Delay { get; set; }
+
+        [Option(CommandOptionType.NoValue, ShortName = "m", LongName = "menu", ShowInHelpText = true,
+                Description = "Displays a menu for selecting the desired text.")]
+        public bool Menu { get; set; }
+        #endregion
+
+        #region Private Properties
+        private Config CurrentConfig { get; set; }
+
+        private string Text { get; set; }
+
+        private Dictionary<int, string> ParsedSequenceValues { get; set; }
+        #endregion
+
+        #region Private Static Methods
+        private static DateTime RoundToNearest(DateTime dt, TimeSpan d)
+        {
+            long delta = dt.Ticks % d.Ticks;
+            bool roundUp = delta > d.Ticks / 2;
+            long offset = roundUp ? d.Ticks : 0;
+
+            return new DateTime(dt.Ticks + offset - delta, dt.Kind);
+        }
+        #endregion
+
+        #region Private Methods
+        private void Fail(string message)
+        {
+            ConsoleColor currentConsoleColor = Console.ForegroundColor;
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine(message);
+            Console.ForegroundColor = currentConsoleColor;
+            if (Delay != null)
+            {
+                Thread.Sleep(Delay.Value * 1000);
+            }
+            Environment.Exit(-1);
+        }
+
+        private void Succeed(string message, bool exitImmediately = true)
+        {
+            ConsoleColor currentConsoleColor = Console.ForegroundColor;
+            Console.ForegroundColor = ConsoleColor.Blue;
+            Console.WriteLine(message);
+            Console.ForegroundColor = currentConsoleColor;
+            if (Delay != null && exitImmediately)
+            {
+                Thread.Sleep(Delay.Value * 1000);
+            }
+            if (exitImmediately)
+            {
+                Environment.Exit(0);
+            }
+        }
+
+        private void TryGenerateConfigFile()
         {
             if (!File.Exists(ConfigFile))
             {
@@ -93,21 +119,23 @@ namespace TextCycler
                 {
                     Config blankConfig = new Config
                     {
-                        nextTextIndex = null,
-                        targetFile = "targetfile.txt",
-                        texts = new [] 
+                        NextTextIndex = 0,
+                        TargetFile = "targetfile.txt",
+                        Texts = new[]
                         {
-                            "First text", 
-                            "Second text, with Current Time (#TIME#), and Rounded to Nearest 5 Minutes Time (#NTIME#)", 
+                            "First text",
+                            "Second text, with Current Time (#TIME#), and Rounded to Nearest 5 Minutes Time (#NTIME#)",
                             "Third Text, with the sequence 0 (#SEQUENCE_00#) from 01 to 05",
                             "Fourth Text, with the sequence 1 (#SEQUENCE_01#) using text values"
                         },
-                        sequences = new [] 
-                        { 
+                        Sequences = new[]
+                        {
                             new [] { "01", "02", "03", "04", "05" },
                             new [] { "lorem", "ipsum", "dolor" }
                         },
-                        sequencePositions = null,
+                        SequencePositions = new[] { 0, 0 },
+                        LastTextIndexUsedInMenu = 0,
+                        LastWrittenText = "",
                         ConfigPath = ConfigFile
                     };
                     blankConfig.Save();
@@ -115,28 +143,89 @@ namespace TextCycler
                 }
                 Fail($"The config file {ConfigFile} does not exists or is inaccessible.");
             }
+        }
 
-            Config config = null;
+        private void TryLoadConfigFile()
+        {
             try
             {
-                config = Config.Load(ConfigFile);
+                CurrentConfig = Config.Load(ConfigFile);
+                if (CurrentConfig.NextTextIndex == null)
+                {
+                    CurrentConfig.NextTextIndex = 0;
+                }
+                if (CurrentConfig.SequencePositions == null)
+                {
+                    CurrentConfig.SequencePositions = new int[CurrentConfig.Texts.Length];
+                }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Fail($"The config file could not be parsed, or has errors: '{ex.Message}'");
             }
-            
-            if (config.texts.Length == 0 && !PromptForText)
-            {
-                Fail($"At least one text must be defined in the 'texts' array at the config file.");
-            }
+        }
 
-            if (TextIndex != null && !PromptForText && TextIndex > config.texts.Length-1)
+        private void ValidateOptions()
+        {
+            if (!PromptForText)
             {
-                Fail($"As you have {config.texts.Length} texts defined in the supplied config file, the index, if supplied, must be between 0 and {config.texts.Length -1}.");
-            }
+                if (CurrentConfig.Texts.Length == 0)
+                {
+                    Fail($"At least one text must be defined in the 'texts' array at the config file if the --prompt option is not supplied.");
+                }
 
-            TargetFile = TargetFile ?? config.targetFile;
+                if (TextIndex != null && TextIndex > CurrentConfig.Texts.Length - 1)
+                {
+                    Fail($"As you have {CurrentConfig.Texts.Length} texts defined in the supplied config file, the index, if supplied, must be between 0 and {CurrentConfig.Texts.Length - 1}.");
+                }
+
+                if (Menu && CycleInterval != null)
+                {
+                    Fail("You can't use the '-m' and '-a' options at the same time.");
+                }
+            }
+            else
+            {
+                if (CycleInterval != null)
+                {
+                    Fail("You can't use the '-p' and '-a' options at the same time.");
+                }
+
+                if (Menu)
+                {
+                    Fail("You can't use the '-p' and '-m' options at the same time.");
+                }
+            }
+        }
+
+        private void TryParseSequenceValues()
+        {
+            ParsedSequenceValues = new Dictionary<int, string>();
+            if (SequenceValues != null && SequenceValues.Any())
+            {
+                foreach (string sequenceValue in SequenceValues)
+                {
+                    if (!sequenceValue.Contains(','))
+                    {
+                        Fail("Sequence values must be specified in the {sequenceIndex},{sequenceValue}, ex: '1,lorem'. If you need to place a comma in the sequence text, use '\\,' to escape it.");
+                    }
+                    string[] pair = sequenceValue.Replace("\\,", "##COMMA##").Split(',').Select(p => p.Replace("##COMMA##", ",")).ToArray();
+                    if (pair.Length != 2)
+                    {
+                        Fail("Sequence values must be specified in the {sequenceIndex},{sequenceValue}, ex: '1,lorem'. If you need to place a comma in the sequence text, use '\\,' to escape it.");
+                    }
+                    if (!int.TryParse(pair[0], out int sequenceIndex) || sequenceIndex >= CurrentConfig.Sequences.Length)
+                    {
+                        Fail($"Sequence index must be numeric, and as you declared {CurrentConfig.Sequences.Length} sequence sequences, the index must be between 0 and {CurrentConfig.Sequences.Length - 1}.");
+                    }
+                    ParsedSequenceValues.Add(sequenceIndex, pair[1]);
+                }
+            }
+        }
+
+        private void TrySetTargetFile()
+        {
+            TargetFile ??= CurrentConfig.TargetFile;
 
             if (string.IsNullOrWhiteSpace(TargetFile))
             {
@@ -152,191 +241,290 @@ namespace TextCycler
                 catch (Exception ex)
                 {
                     Fail($"The target file '{TargetFile}' does not exist, and cannot be created: {ex.Message}");
-                }            
-            }
-
-            Dictionary<int, string> sequenceValues = new Dictionary<int, string>();
-            if (SequenceValues != null && SequenceValues.Any())
-            {
-                foreach (string sequenceValue in SequenceValues)
-                {
-                    if (!sequenceValue.Contains(','))
-                    {
-                        Fail("Sequence values must be specified in the {sequenceIndex},{sequenceValue}, ex: '1,lorem'. If you need to place a comma in the sequence text, use '\\,' to escape it.");
-                    }
-                    string[] pair = sequenceValue.Replace("\\,", "##COMMA##").Split(',').Select(p => p.Replace("##COMMA##", ",")).ToArray();
-                    if (pair.Length != 2)
-                    {
-                        Fail("Sequence values must be specified in the {sequenceIndex},{sequenceValue}, ex: '1,lorem'. If you need to place a comma in the sequence text, use '\\,' to escape it.");
-                    }
-                    if (!int.TryParse(pair[0], out int sequenceIndex) || sequenceIndex >= config.sequences.Length)
-                    {
-                        Fail($"Sequence index must be numeric, and as you declared {config.sequences.Length} sequence sequences, the index must be between 0 and {config.sequences.Length-1}.");
-                    }
-                    sequenceValues.Add(sequenceIndex, pair[1]);
                 }
             }
+        }
 
-            if (config.nextTextIndex == null)
+        private void ParseInitialText()
+        {
+            if (PromptForText)
             {
-                config.nextTextIndex = 0;
+                Text = ReadLine2.Read("Enter your text: ", CurrentConfig.LastWrittenText);
+            }
+            else if (Menu)
+            {
+                for (int i = 0; i < CurrentConfig.Texts.Length; i++)
+                {
+                    Console.WriteLine($"[{i}] {CurrentConfig.Texts[i]}");
+                }
+                Console.WriteLine("[#] [Enter a custom text]");
+                ReadLine2.AddHistory(Enumerable.Range(0, CurrentConfig.Texts.Length).Select(i => i.ToString()).ToArray());
+
+                int index = -1;
+                int lastUsedTextIndex = (CurrentConfig.LastTextIndexUsedInMenu ?? 0);
+
+                do
+                {
+                    string enteredIndex = ReadLine2.Read("\r\nEnter the desired text index: ", (TextIndex ?? lastUsedTextIndex).ToString());
+                    if (enteredIndex == "#")
+                    {
+                        Text = ReadLine2.Read("Enter your text: ", CurrentConfig.LastWrittenText);
+                        return;
+                    }
+                    else if (!int.TryParse(enteredIndex, out index) || index < 0 || index >= CurrentConfig.Texts.Length)
+                    {
+                        Console.WriteLine($"'{enteredIndex}' is not a valid index. Enter a value between 0 and {CurrentConfig.Texts.Length - 1}.");
+                        index = -1;
+                    }
+                } while (index == -1);
+                CurrentConfig.LastTextIndexUsedInMenu = index;
+                Text = CurrentConfig.Texts[index];
+            }
+            else
+            {
+                Text = CurrentConfig.Texts[TextIndex ?? CurrentConfig.NextTextIndex ?? 0];
+            }
+        }
+
+        private void ParseVariables()
+        {
+            (string variableName, string defaultValue) SplitVariable(string v)
+            {
+                v = v.Replace("\\:", "##COLON##");
+                string[] parts = v.Split(':');
+                string name = parts[0].Replace("##COLON##", ":");
+                string @default = parts.Length > 1 ? parts[1].Replace("##COLON##", ":") : "";
+                return (name, @default);
             }
 
-            do
+            if (Variables != null)
             {
-                string text = null;
-                if (PromptForText)
+                foreach ((string variableName, string defaultValue) in Variables.Select(SplitVariable))
                 {
-                    Console.Write("Enter your text: ");
-                    text = Console.ReadLine();
+                    string variableValue = ReadLine2.Read($"Enter the value for #{variableName}#: ", defaultValue);
+                    Text = Text.Replace($"#{variableName}#", variableValue);
                 }
-                else
-                {
-                    text = config.texts[TextIndex ?? config.nextTextIndex ?? 0];
-                }
+            }
 
-                if (config.sequencePositions == null)
+            if (VariablesValues != null)
+            {
+                foreach ((string variableName, string variableValue) in VariablesValues.Select(SplitVariable))
                 {
-                    config.sequencePositions = new int[config.texts.Length];
-                }
-
-                int sequencesLength = config.sequences.Length;
-                int sequencePositionsLength = config.sequencePositions.Length;
-                if (sequencesLength > 0 && Regex.IsMatch(text, @"#SEQUENCE_\d{2}#"))
-                {
-                    if (sequencesLength != sequencePositionsLength)
+                    if (string.IsNullOrEmpty(variableName))
                     {
-                        config.sequencePositions = new int[config.texts.Length];
+                        Fail($"No value was provided for the variable '{variableName}'");
                     }
+                    Text = Text.Replace($"#{variableName}#", variableValue);
+                }
+            }
+        }
 
-                    for (int i = 0; i < sequencesLength; i++)
+        private void ParseSequences()
+        {
+            int sequencesLength = CurrentConfig.Sequences.Length;
+            int sequencePositionsLength = CurrentConfig.SequencePositions.Length;
+            if (sequencesLength > 0 && Regex.IsMatch(Text, @"#SEQUENCE_\d{2}#"))
+            {
+                if (sequencesLength != sequencePositionsLength)
+                {
+                    CurrentConfig.SequencePositions = new int[CurrentConfig.Texts.Length];
+                }
+
+                for (int i = 0; i < sequencesLength; i++)
+                {
+                    string sequenceKey = $"#SEQUENCE_{i:00}#";
+                    if (Text.Contains(sequenceKey))
                     {
-                        string sequenceKey = $"#SEQUENCE_{i:00}#";
-                        if (text.Contains(sequenceKey))
+                        string sequenceValue = ParsedSequenceValues.ContainsKey(i) ? ParsedSequenceValues[i] : null;
+                        Text = Text.Replace(sequenceKey, sequenceValue ?? CurrentConfig.Sequences[i][CurrentConfig.SequencePositions[i]]);
+                        if (sequenceValue == null)
                         {
-                            string sequenceValue = sequenceValues.ContainsKey(i) ? sequenceValues[i] : null;
-                            text = text.Replace(sequenceKey, sequenceValue ?? config.sequences[i][config.sequencePositions[i]]);
-                            if (sequenceValue == null)
+                            CurrentConfig.SequencePositions[i]++;
+                            if (CurrentConfig.SequencePositions[i] == CurrentConfig.Sequences[i].Length)
                             {
-                                config.sequencePositions[i]++;
-                                if (config.sequencePositions[i] == config.sequences[i].Length)
-                                {
-                                    config.sequencePositions[i] = 0;
-                                }
+                                CurrentConfig.SequencePositions[i] = 0;
                             }
                         }
                     }
                 }
-
-                DateTime currentTime = CurrentTime ?? DateTime.Now;
-
-                if (text.Contains("#TIME#"))
-                {
-                    text = text.Replace($"#TIME#", currentTime.ToString("HH:mm"));
-                }
-
-                if (text.Contains("#NTIME#"))
-                {
-                    text = text.Replace($"#NTIME#", RoundToNearest(currentTime, TimeSpan.FromMinutes(5)).ToString("HH:mm"));
-                }
-
-                if (Regex.IsMatch(text, @"#TIME\+\d{1,2}#"))
-                {
-                    for (int i = 1; i <= 99; i++)
-                    {
-                        text = text.Replace($"#TIME+{i}#", currentTime.AddMinutes(i).ToString("HH:mm"));
-                        text = text.Replace($"#TIME+{i:00}#", currentTime.AddMinutes(i).ToString("HH:mm"));
-                    }
-                }
-
-                if (Regex.IsMatch(text, @"#NTIME\+\d{1,2}#"))
-                {
-                    for (int i = 1; i <= 99; i++)
-                    {
-                        text = text.Replace($"#NTIME+{i}#", RoundToNearest(currentTime.AddMinutes(i), TimeSpan.FromMinutes(5)).ToString("HH:mm"));
-                        text = text.Replace($"#NTIME+{i:00}#", RoundToNearest(currentTime.AddMinutes(i), TimeSpan.FromMinutes(5)).ToString("HH:mm"));
-                    }
-                }
-
-                if (Regex.IsMatch(text, @"#TIME\-\d{1,2}#"))
-                {
-                    for (int i = 1; i <= 99; i++)
-                    {
-                        text = text.Replace($"#TIME-{i}#", currentTime.AddMinutes(-i).ToString("HH:mm"));
-                        text = text.Replace($"#TIME-{i:00}#", currentTime.AddMinutes(-i).ToString("HH:mm"));
-                    }
-                }
-
-                if (Regex.IsMatch(text, @"#NTIME\-\d{1,2}#"))
-                {
-                    for (int i = 1; i <= 99; i++)
-                    {
-                        text = text.Replace($"#NTIME-{i}#", RoundToNearest(currentTime.AddMinutes(-i), TimeSpan.FromMinutes(5)).ToString("HH:mm"));
-                        text = text.Replace($"#NTIME-{i:00}#", RoundToNearest(currentTime.AddMinutes(-i), TimeSpan.FromMinutes(5)).ToString("HH:mm"));
-                    }
-                }
-
-                if (text.Contains("#TIME12#"))
-                {
-                    text = text.Replace($"#TIME12#", currentTime.ToString("hh:mmtt"));
-                }
-
-                if (text.Contains("#NTIME12#"))
-                {
-                    text = text.Replace($"#NTIME12#", RoundToNearest(currentTime, TimeSpan.FromMinutes(5)).ToString("hh:mmtt"));
-                }
-
-                if (Regex.IsMatch(text, @"#TIME12\+\d{1,2}#"))
-                {
-                    for (int i = 1; i <= 99; i++)
-                    {
-                        text = text.Replace($"#TIME12+{i}#", currentTime.AddMinutes(i).ToString("hh:mmtt"));
-                        text = text.Replace($"#TIME12+{i:00}#", currentTime.AddMinutes(i).ToString("hh:mmtt"));
-                    }
-                }
-
-                if (Regex.IsMatch(text, @"#NTIME12\+\d{1,2}#"))
-                {
-                    for (int i = 1; i <= 99; i++)
-                    {
-                        text = text.Replace($"#NTIME12+{i}#", RoundToNearest(currentTime.AddMinutes(i), TimeSpan.FromMinutes(5)).ToString("hh:mmtt"));
-                        text = text.Replace($"#NTIME12+{i:00}#", RoundToNearest(currentTime.AddMinutes(i), TimeSpan.FromMinutes(5)).ToString("hh:mmtt"));
-                    }
-                }
-
-                if (Regex.IsMatch(text, @"#TIME12\-\d{1,2}#"))
-                {
-                    for (int i = 1; i <= 99; i++)
-                    {
-                        text = text.Replace($"#TIME12-{i}#", currentTime.AddMinutes(-i).ToString("hh:mmtt"));
-                        text = text.Replace($"#TIME12-{i:00}#", currentTime.AddMinutes(-i).ToString("hh:mmtt"));
-                    }
-                }
-
-                if (Regex.IsMatch(text, @"#NTIME12\-\d{1,2}#"))
-                {
-                    for (int i = 1; i <= 99; i++)
-                    {
-                        text = text.Replace($"#NTIME12-{i}#", RoundToNearest(currentTime.AddMinutes(-i), TimeSpan.FromMinutes(5)).ToString("hh:mmtt"));
-                        text = text.Replace($"#NTIME12-{i:00}#", RoundToNearest(currentTime.AddMinutes(-i), TimeSpan.FromMinutes(5)).ToString("hh:mmtt"));
-                    }
-                }
-
-                File.WriteAllText(TargetFile, text, System.Text.Encoding.UTF8);
-
-                if (!PromptForText && TextIndex == null)
-                {
-                    config.nextTextIndex++;
-                    if (config.nextTextIndex == config.texts.Length)
-                    {
-                        config.nextTextIndex = 0;
-                    }
-                }
-
-                File.WriteAllBytes(ConfigFile, JsonSerializer.SerializeToUtf8Bytes(config, options: new JsonSerializerOptions { WriteIndented = true, Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping }));
-
-                Succeed($"The text '{text}' was written to '{TargetFile}'", false); 
-            } while (WaitNextCycle(CycleInterval));
+            }
         }
+
+        private IEnumerable<(string, int)> GetMatches(string pattern)
+        {
+            foreach (Match match in Regex.Matches(Text, pattern))
+            {
+                string matchedText = match.Groups[1].Value;
+                int matchedValue = int.Parse(matchedText);
+                yield return (matchedText, matchedValue);
+            }
+        }
+
+        private void ParseTIME()
+        {
+            DateTime currentTime = CurrentTime.Value;
+            if (Text.Contains("#TIME#"))
+            {
+                Text = Text.Replace("#TIME#", currentTime.ToString("HH:mm"));
+            }
+
+            foreach ((string matchedText, int matchedValue) in GetMatches(@"#TIME\+(\d+)#"))
+            {
+                Text = Text.Replace($"#TIME+{matchedText}#", currentTime.AddMinutes(matchedValue).ToString("HH:mm"));
+            }
+
+            foreach ((string matchedText, int matchedValue) in GetMatches(@"#TIME\-(\d+)#"))
+            {
+                Text = Text.Replace($"#TIME-{matchedText}#", currentTime.AddMinutes(-matchedValue).ToString("HH:mm"));
+            }
+        }
+
+        private void ParseNTIME()
+        {
+            DateTime currentTime = CurrentTime.Value;
+            if (Text.Contains("#NTIME#"))
+            {
+                Text = Text.Replace("#NTIME#", RoundToNearest(currentTime, TimeSpan.FromMinutes(5)).ToString("HH:mm"));
+            }
+
+            foreach ((string matchedText, int matchedValue) in GetMatches(@"#NTIME\+(\d+)#"))
+            {
+                Text = Text.Replace($"#NTIME+{matchedText}#", RoundToNearest(currentTime.AddMinutes(matchedValue), TimeSpan.FromMinutes(5)).ToString("HH:mm"));
+            }
+
+            foreach ((string matchedText, int matchedValue) in GetMatches(@"#NTIME\-(\d+)#"))
+            {
+                Text = Text.Replace($"#NTIME-{matchedText}#", RoundToNearest(currentTime.AddMinutes(-matchedValue), TimeSpan.FromMinutes(5)).ToString("HH:mm"));
+            }
+        }
+
+        private void ParseTIME12()
+        {
+            DateTime currentTime = CurrentTime.Value;
+
+            if (Text.Contains("#TIME12#"))
+            {
+                Text = Text.Replace($"#TIME12#", currentTime.ToString("hh:mmtt"));
+            }
+
+            foreach ((string matchedText, int matchedValue) in GetMatches(@"#TIME12\+(\d+)#"))
+            {
+                Text = Text.Replace($"#TIME12+{matchedText}#", currentTime.AddMinutes(matchedValue).ToString("hh:mmtt"));
+            }
+
+            foreach ((string matchedText, int matchedValue) in GetMatches(@"#TIME12\-(\d+)#"))
+            {
+                Text = Text.Replace($"#TIME12-{matchedText}#", currentTime.AddMinutes(-matchedValue).ToString("hh:mmtt"));
+            }
+        }
+
+        private void ParseNTIME12()
+        {
+            DateTime currentTime = CurrentTime.Value;
+
+            if (Text.Contains("#NTIME12#"))
+            {
+                Text = Text.Replace($"#NTIME12#", RoundToNearest(currentTime, TimeSpan.FromMinutes(5)).ToString("hh:mmtt"));
+            }
+
+            foreach ((string matchedText, int matchedValue) in GetMatches(@"#NTIME12\+(\d+)#"))
+            {
+                Text = Text.Replace($"#NTIME12+{matchedText}#", RoundToNearest(currentTime.AddMinutes(matchedValue), TimeSpan.FromMinutes(5)).ToString("hh:mmtt"));
+            }
+
+            foreach ((string matchedText, int matchedValue) in GetMatches(@"#NTIME12\-(\d+)#"))
+            {
+                Text = Text.Replace($"#NTIME12-{matchedText}#", RoundToNearest(currentTime.AddMinutes(-matchedValue), TimeSpan.FromMinutes(5)).ToString("hh:mmtt"));
+            }
+        }
+
+        private void UpdateTargetFile()
+        {
+            File.WriteAllText(TargetFile, Text, System.Text.Encoding.UTF8);
+            Succeed($"The text '{Text}' was written to '{TargetFile}'", false);
+        }
+
+        private void UpdateConfigFile()
+        {
+            if (!PromptForText && TextIndex == null && !Menu)
+            {
+                CurrentConfig.NextTextIndex++;
+                if (CurrentConfig.NextTextIndex == CurrentConfig.Texts.Length)
+                {
+                    CurrentConfig.NextTextIndex = 0;
+                }
+            }
+
+            CurrentConfig.LastWrittenText = Text;
+
+            File.WriteAllBytes(ConfigFile, JsonSerializer.SerializeToUtf8Bytes(CurrentConfig, options: new JsonSerializerOptions { WriteIndented = true, Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping }));
+        }
+
+        private bool WaitNextCycle()
+        {
+            if (CycleInterval == null)
+            {
+                return false;
+            }
+
+            Thread.Sleep(CycleInterval.Value * 1000);
+            CurrentTime = DateTime.Now;
+            return true;
+        }
+        #endregion
+
+        #region Public Methods
+        public static void Main(string[] args)
+        {
+            CommandLineApplication.Execute<Program>(args);
+        }
+
+        public void OnExecute()
+        {
+            try
+            {
+                TryGenerateConfigFile();
+
+                TryLoadConfigFile();
+
+                ValidateOptions();
+
+                TrySetTargetFile();
+
+                TryParseSequenceValues();
+
+                CurrentTime ??= DateTime.Now;
+
+                do
+                {
+                    ParseInitialText();
+
+                    ParseVariables();
+
+                    ParseSequences();
+
+                    ParseTIME();
+
+                    ParseNTIME();
+
+                    ParseTIME12();
+
+                    ParseNTIME12();
+
+                    UpdateTargetFile();
+
+                    UpdateConfigFile();
+
+                } while (WaitNextCycle());
+
+            }
+            catch (Exception ex)
+            {
+                string errorFileName = Path.GetTempFileName();
+                File.WriteAllText(errorFileName, ex.ToString());
+                Fail($"Oops. Something went wrong.\r\nThe details of the error were written to '{errorFileName}'");
+            }
+        }
+        #endregion    
     }
 }
