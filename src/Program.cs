@@ -79,6 +79,15 @@ namespace TextCycler
 
             return new DateTime(dt.Ticks + offset - delta, dt.Kind);
         }
+
+        private static string WriteExceptionFile(Exception ex)
+        {
+            string randomPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+            using FileStream fileStream = new FileStream(randomPath, FileMode.CreateNew, FileAccess.Write, FileShare.None, 4096, FileOptions.DeleteOnClose);
+            using StreamWriter writer = new StreamWriter(fileStream);
+            writer.WriteLine(ex.ToString());
+            return randomPath;
+        }
         #endregion
 
         #region Private Methods
@@ -155,6 +164,10 @@ namespace TextCycler
                     CurrentConfig.NextTextIndex = 0;
                 }
                 if (CurrentConfig.SequencePositions == null)
+                {
+                    CurrentConfig.SequencePositions = new int[CurrentConfig.Texts.Length];
+                }
+                if (CurrentConfig.Sequences.Length != CurrentConfig.SequencePositions.Length)
                 {
                     CurrentConfig.SequencePositions = new int[CurrentConfig.Texts.Length];
                 }
@@ -288,7 +301,7 @@ namespace TextCycler
 
         private void ParseVariables()
         {
-            (string variableName, string defaultValue) SplitVariable(string v)
+            static (string variableName, string defaultValue) SplitVariable(string v)
             {
                 v = v.Replace("\\:", "##COLON##");
                 string[] parts = v.Split(':');
@@ -322,30 +335,27 @@ namespace TextCycler
         private void ParseSequences()
         {
             int sequencesLength = CurrentConfig.Sequences.Length;
-            int sequencePositionsLength = CurrentConfig.SequencePositions.Length;
-            if (sequencesLength > 0 && Regex.IsMatch(Text, @"#SEQUENCE_\d{2}#"))
+            if (sequencesLength == 0 || !Regex.IsMatch(Text, @"#SEQUENCE_\d{2}#"))
             {
-                if (sequencesLength != sequencePositionsLength)
+                return;
+            }
+            for (int i = 0; i < sequencesLength; i++)
+            {
+                string sequenceKey = $"#SEQUENCE_{i:00}#";
+                if (!Text.Contains(sequenceKey))
                 {
-                    CurrentConfig.SequencePositions = new int[CurrentConfig.Texts.Length];
+                    continue;
                 }
-
-                for (int i = 0; i < sequencesLength; i++)
+                string sequenceValue = ParsedSequenceValues.ContainsKey(i) ? ParsedSequenceValues[i] : null;
+                Text = Text.Replace(sequenceKey, sequenceValue ?? CurrentConfig.Sequences[i][CurrentConfig.SequencePositions[i]]);
+                if (sequenceValue != null)
                 {
-                    string sequenceKey = $"#SEQUENCE_{i:00}#";
-                    if (Text.Contains(sequenceKey))
-                    {
-                        string sequenceValue = ParsedSequenceValues.ContainsKey(i) ? ParsedSequenceValues[i] : null;
-                        Text = Text.Replace(sequenceKey, sequenceValue ?? CurrentConfig.Sequences[i][CurrentConfig.SequencePositions[i]]);
-                        if (sequenceValue == null)
-                        {
-                            CurrentConfig.SequencePositions[i]++;
-                            if (CurrentConfig.SequencePositions[i] == CurrentConfig.Sequences[i].Length)
-                            {
-                                CurrentConfig.SequencePositions[i] = 0;
-                            }
-                        }
-                    }
+                    continue;
+                }
+                CurrentConfig.SequencePositions[i]++;
+                if (CurrentConfig.SequencePositions[i] == CurrentConfig.Sequences[i].Length)
+                {
+                    CurrentConfig.SequencePositions[i] = 0;
                 }
             }
         }
@@ -520,8 +530,7 @@ namespace TextCycler
             }
             catch (Exception ex)
             {
-                string errorFileName = Path.GetTempFileName();
-                File.WriteAllText(errorFileName, ex.ToString());
+                string errorFileName = WriteExceptionFile(ex);
                 Fail($"Oops. Something went wrong.\r\nThe details of the error were written to '{errorFileName}'");
             }
         }

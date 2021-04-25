@@ -1,0 +1,15 @@
+{
+  "ServerUri": "https://sonarcloud.io/",
+  "Organization": {
+    "Key": "robson-rocha-github",
+    "Name": "Robson Rocha de Araújo"
+  },
+  "ProjectKey": "Robson-Rocha_TextCycler",
+  "ProjectName": "TextCycler",
+  "Profiles": {
+    "CSharp": {
+      "ProfileKey": "AWokqdF1bZ-4oYCt2IS9",
+      "ProfileTimestamp": "2021-03-19T09:13:51Z"
+    }
+  }
+}

@@ -22,9 +22,14 @@
     <AssemblyVersion>1.0.4</AssemblyVersion>
     <Version>$(AssemblyVersion)</Version>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
-    <EnableNETAnalyzers>true</EnableNETAnalyzers>    
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <CodeAnalysisRuleSet>.sonarlint\robson-rocha_textcyclercsharp.ruleset</CodeAnalysisRuleSet>    
 
   </PropertyGroup>
+
+  <ItemGroup>
+    <AdditionalFiles Include=".sonarlint\robson-rocha_textcycler\CSharp\SonarLint.xml" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="McMaster.Extensions.CommandLineUtils" Version="3.1.0" />
