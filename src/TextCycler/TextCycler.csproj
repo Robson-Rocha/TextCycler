@@ -20,7 +20,7 @@
     <PackageTags>tool, text, cycle, obs</PackageTags>
     <Company>Robson Rocha de Araújo</Company>
     <AssemblyVersion>1.0.4</AssemblyVersion>
-    <Version>$(AssemblyVersion)</Version>
+    <Version>$(AssemblyVersion)-pre</Version>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <EnableNETAnalyzers>true</EnableNETAnalyzers>
     <CodeAnalysisRuleSet>.sonarlint\robson-rocha_textcyclercsharp.ruleset</CodeAnalysisRuleSet>    

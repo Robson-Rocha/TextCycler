@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -18,10 +19,25 @@ namespace TextCycler
 
         private readonly IFile _file;
 
-        public Program(IConsole console = null, IFile file = null)
+        public Program()
+            :this(console: new ConsoleWrapper(), file: new FileWrapper())
         {
-            _console = console ?? new ConsoleWrapper();
-            _file = file ?? new FileWrapper();
+        }
+
+        public Program(IFile file)
+            : this(console: new ConsoleWrapper(), file: file)
+        {
+        }
+
+        public Program(IConsole console)
+            : this(console: console, file: new FileWrapper())
+        {
+        }
+
+        public Program(IConsole console, IFile file)
+        {
+            _console = console;
+            _file = file;
         }
 
         #region Public Properties for Command Options
@@ -58,12 +74,16 @@ namespace TextCycler
         public bool PromptForText { get; set; }
 
         [Option(CommandOptionType.MultipleValue, ShortName = "v", LongName = "variable", ShowInHelpText = true,
-                ValueName = "{VariableName}[:{DefaultValue}]", Description = "Asks for the value of a variable, which can be used in a replacement token in the format #VARIABLE_NAME#. Optionally, you can provide a default value to the variable, which will be displayed at prompt, using a colon after the variable name, and providing the value after that colon.")]
+                ValueName = "{VariableName}[:{Default Value}]", Description = "Asks for the value of a variable, which can be used in a replacement token in the format {VARIABLE_NAME}. Optionally, you can provide a default value to the variable, which will be displayed at prompt, using a colon after the variable name, and providing the value after that colon.")]
         public string[] Variables { get; set; }
 
         [Option(CommandOptionType.MultipleValue, ShortName = "vv", LongName = "variableValue", ShowInHelpText = true,
-                ValueName = "{VariableName}:{Value}", Description = "Sets the value of a variable, which can be used in a replacement token in the format #VARIABLE_NAME#. You must provide the value for the variable using a colon after the variable name, and providing the value after that colon.")]
+                ValueName = "{VariableName}:{Value}", Description = "Sets the value of a variable, which can be used in a replacement token in the format {VARIABLE_NAME}. You must provide the value for the variable using a colon after the variable name, and providing the value after that colon.")]
         public string[] VariablesValues { get; set; }
+
+        [Option(CommandOptionType.NoValue, ShortName = "va", LongName = "askForVariables", ShowInHelpText = true,
+                Description = "Detects variables in current or provided text, and asks for the values of the detected variables, which can be used in a replacement token in the format {VARIABLE_NAME}.")]
+        public bool AskForVariables { get; set; }
 
         [Option(CommandOptionType.SingleValue, ShortName = "d", LongName = "delay", ShowInHelpText = true,
                 ValueName = "Delay to be waited for after setting the target file text, in seconds", Description = "If defined, waits for the specified number of seconds after setting the target file. Useful for letting the result message be read.")]
@@ -249,6 +269,12 @@ namespace TextCycler
             {
                 ValidateOptionsWhenPromptedForText();
             }
+
+            if ((CycleInterval != null) && (Variables.Any() || AskForVariables))
+            {
+                Fail("You can't use the '-m' and '-v' / '-va' options at the same time.");
+            }
+
             if ((SequenceValues?.Any() ?? false) && (CurrentConfig.Sequences?.Length ?? 0) == 0)
             {
                 Fail($"There are no sequences declared in '{ConfigFile}' config file to override.");
@@ -355,12 +381,34 @@ namespace TextCycler
                 return (name, @default);
             }
 
+            Text = Text.Replace("\\{", "##OPEN_BRACE##")
+                       .Replace("\\}", "##CLOSE_BRACE##");
+
+            static string Unescape(string text)
+            {
+                return text.Replace("##OPEN_BRACE##", "{")
+                           .Replace("##CLOSE_BRACE##", "}");
+            }
+
+            if (AskForVariables)
+            {
+                var variableList = new List<string>();
+                foreach(string variableName in GetTextMatches(@"\{(.*?)(?=\})"))
+                {
+                    variableList.Add(variableName);
+                }
+                if (variableList.Any())
+                {
+                    Variables = variableList.ToArray();
+                }
+            }
+
             if (Variables != null)
             {
                 foreach ((string variableName, string defaultValue) in Variables.Select(SplitVariable))
                 {
-                    string variableValue = _console.Read($"Enter the value for #{variableName}#: ", defaultValue);
-                    Text = Text.Replace($"#{variableName}#", variableValue);
+                    string variableValue = _console.Read($"Enter the value for {{{Unescape(variableName)}}}: ", defaultValue);
+                    Text = Text.Replace($"{{{variableName}}}", variableValue);
                 }
             }
 
@@ -370,11 +418,13 @@ namespace TextCycler
                 {
                     if (string.IsNullOrEmpty(variableName))
                     {
-                        Fail($"No value was provided for the variable '{variableName}'");
+                        Fail($"No value was provided for the variable '{Unescape(variableName)}'");
                     }
-                    Text = Text.Replace($"#{variableName}#", variableValue);
+                    Text = Text.Replace($"{{{variableName}}}", variableValue);
                 }
             }
+
+            Text = Unescape(Text);
         }
 
         internal void ParseSequences()
@@ -405,11 +455,19 @@ namespace TextCycler
             }
         }
 
-        internal IEnumerable<(string, int)> GetMatches(string pattern)
+        internal IEnumerable<string> GetTextMatches(string pattern)
         {
             foreach (Match match in Regex.Matches(Text, pattern))
             {
                 string matchedText = match.Groups[1].Value;
+                yield return matchedText;
+            }
+        }
+
+        internal IEnumerable<(string, int)> GetValueMatches(string pattern)
+        {
+            foreach (string matchedText in GetTextMatches(pattern))
+            {
                 int matchedValue = int.Parse(matchedText);
                 yield return (matchedText, matchedValue);
             }
@@ -423,12 +481,12 @@ namespace TextCycler
                 Text = Text.Replace("#TIME#", currentTime.ToString("HH:mm"));
             }
 
-            foreach ((string matchedText, int matchedValue) in GetMatches(@"#TIME\+(\d+)#"))
+            foreach ((string matchedText, int matchedValue) in GetValueMatches(@"#TIME\+(\d+)#"))
             {
                 Text = Text.Replace($"#TIME+{matchedText}#", currentTime.AddMinutes(matchedValue).ToString("HH:mm"));
             }
 
-            foreach ((string matchedText, int matchedValue) in GetMatches(@"#TIME\-(\d+)#"))
+            foreach ((string matchedText, int matchedValue) in GetValueMatches(@"#TIME\-(\d+)#"))
             {
                 Text = Text.Replace($"#TIME-{matchedText}#", currentTime.AddMinutes(-matchedValue).ToString("HH:mm"));
             }
@@ -442,12 +500,12 @@ namespace TextCycler
                 Text = Text.Replace("#NTIME#", RoundToNearest5Minutes(currentTime).ToString("HH:mm"));
             }
 
-            foreach ((string matchedText, int matchedValue) in GetMatches(@"#NTIME\+(\d+)#"))
+            foreach ((string matchedText, int matchedValue) in GetValueMatches(@"#NTIME\+(\d+)#"))
             {
                 Text = Text.Replace($"#NTIME+{matchedText}#", RoundToNearest5Minutes(currentTime.AddMinutes(matchedValue)).ToString("HH:mm"));
             }
 
-            foreach ((string matchedText, int matchedValue) in GetMatches(@"#NTIME\-(\d+)#"))
+            foreach ((string matchedText, int matchedValue) in GetValueMatches(@"#NTIME\-(\d+)#"))
             {
                 Text = Text.Replace($"#NTIME-{matchedText}#", RoundToNearest5Minutes(currentTime.AddMinutes(-matchedValue)).ToString("HH:mm"));
             }
@@ -462,12 +520,12 @@ namespace TextCycler
                 Text = Text.Replace($"#TIME12#", currentTime.ToString("hh:mmtt"));
             }
 
-            foreach ((string matchedText, int matchedValue) in GetMatches(@"#TIME12\+(\d+)#"))
+            foreach ((string matchedText, int matchedValue) in GetValueMatches(@"#TIME12\+(\d+)#"))
             {
                 Text = Text.Replace($"#TIME12+{matchedText}#", currentTime.AddMinutes(matchedValue).ToString("hh:mmtt"));
             }
 
-            foreach ((string matchedText, int matchedValue) in GetMatches(@"#TIME12\-(\d+)#"))
+            foreach ((string matchedText, int matchedValue) in GetValueMatches(@"#TIME12\-(\d+)#"))
             {
                 Text = Text.Replace($"#TIME12-{matchedText}#", currentTime.AddMinutes(-matchedValue).ToString("hh:mmtt"));
             }
@@ -482,12 +540,12 @@ namespace TextCycler
                 Text = Text.Replace($"#NTIME12#", RoundToNearest5Minutes(currentTime).ToString("hh:mmtt"));
             }
 
-            foreach ((string matchedText, int matchedValue) in GetMatches(@"#NTIME12\+(\d+)#"))
+            foreach ((string matchedText, int matchedValue) in GetValueMatches(@"#NTIME12\+(\d+)#"))
             {
                 Text = Text.Replace($"#NTIME12+{matchedText}#", RoundToNearest5Minutes(currentTime.AddMinutes(matchedValue)).ToString("hh:mmtt"));
             }
 
-            foreach ((string matchedText, int matchedValue) in GetMatches(@"#NTIME12\-(\d+)#"))
+            foreach ((string matchedText, int matchedValue) in GetValueMatches(@"#NTIME12\-(\d+)#"))
             {
                 Text = Text.Replace($"#NTIME12-{matchedText}#", RoundToNearest5Minutes(currentTime.AddMinutes(-matchedValue)).ToString("hh:mmtt"));
             }
@@ -573,19 +631,24 @@ namespace TextCycler
             {
                 // Nothing to do
             }
+#if !DEBUG
             catch (Exception ex)
             {
                 string errorFileName = WriteExceptionFile(ex);
-                Fail($"Oops. Something went wrong.\r\nThe details of the error were written to '{errorFileName}'");
+                Fail($"Oops. Something went wrong.\r\nThe details of the error were written to '{errorFileName}'", false);
             }
+#endif
         }
         #endregion
 
         #region Public Methods
         public static void Main(string[] args)
         {
+            Console.WriteLine($"TextCycler v{Assembly.GetExecutingAssembly().GetName().Version} by Robson Rocha de Araujo");
+            Console.WriteLine("https://github.com/robson-rocha/textcycler");
+            Console.WriteLine();
             CommandLineApplication.Execute<Program>(args);
         }
-        #endregion    
+#endregion
     }
 }

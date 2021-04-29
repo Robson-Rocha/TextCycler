@@ -1,4 +1,4 @@
-[![NuGet version](https://badge.fury.io/nu/textcycler.svg)](https://badge.fury.io/nu/textcycler)
+[![NuGet version](https://badge.fury.io/nu/textcycler.svg)](https://badge.fury.io/nu/textcycler)[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=Robson-Rocha_TextCycler&metric=alert_status)](https://sonarcloud.io/dashboard?id=Robson-Rocha_TextCycler)
 
 <img align="left" src="docs/textcycle-nuget.png" width="150" />
 
@@ -175,6 +175,7 @@ textcycler -c config.json -m
 [1] Second text, with Current Time (#TIME#), and Rounded to Nearest 5 Minutes Time (#NTIME#)
 [2] Third Text, with the sequence 0 (#SEQUENCE_00#) from 01 to 05
 [3] Fourth Text, with the sequence 1 (#SEQUENCE_01#) using text values
+[#] [Enter a custom text]
 
 Enter the desired index: 0
 ```
@@ -184,6 +185,8 @@ The text 'First text' was written to 'targetfile.txt'
 ```
 
 The default index will be the last text index used with the menu. You can cycle between the index values using the `up arrow` and `down arrow` keys.
+
+If no option match your needs, you can select the `#` option and enter a custom text.
 
 Selecting the text index with the menu does not change the next text index.
 
