@@ -14,7 +14,7 @@ namespace TextCycler.Tests
         {
             DeleteConfig(configFile);
             DeleteTarget(targetFile);
-            var p_arrange = new Program
+            var p_arrange = new TextCycler
             {
                 ConfigFile = configFile,
                 GenerateConfigFile = true

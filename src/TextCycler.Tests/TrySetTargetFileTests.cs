@@ -21,7 +21,7 @@ namespace TextCycler.Tests
                 {
                     config.TargetFile = null;
                 });
-                var p = new Program
+                var p = new TextCycler
                 {
                     ConfigFile = configFile,
                     TargetFile = null
@@ -55,7 +55,7 @@ namespace TextCycler.Tests
             {
                 // Arrange
                 CreateConfig();
-                var p = new Program
+                var p = new TextCycler
                 {
                     ConfigFile = configFile,
                 };
@@ -82,7 +82,7 @@ namespace TextCycler.Tests
             {
                 // Arrange
                 CreateConfig();
-                var p = new Program
+                var p = new TextCycler
                 {
                     ConfigFile = configFile,
                 };
@@ -119,7 +119,7 @@ namespace TextCycler.Tests
                 fileMock.Setup(file => file.WriteAllText(targetFile, ""))
                         .Throws<UnauthorizedAccessException>();
 
-                var p = new Program(file: fileMock.Object)
+                var p = new TextCycler(file: fileMock.Object)
                 {
                     ConfigFile = configFile,
                 };

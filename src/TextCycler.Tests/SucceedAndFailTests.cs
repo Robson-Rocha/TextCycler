@@ -12,7 +12,7 @@ namespace TextCycler.Tests
         public void Succeed_ShouldSleep()
         {
             // Arrange
-            var p = new Program
+            var p = new TextCycler
             {
                 Delay = 1
             };
@@ -31,7 +31,7 @@ namespace TextCycler.Tests
         public void Fail_ShouldSleep()
         {
             // Arrange
-            var p = new Program
+            var p = new TextCycler
             {
                 Delay = 1
             };

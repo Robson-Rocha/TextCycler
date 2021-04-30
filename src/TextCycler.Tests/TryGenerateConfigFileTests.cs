@@ -14,7 +14,7 @@ namespace TextCycler.Tests
             // Arrange
             try
             {
-                var p = new Program
+                var p = new TextCycler
                 {
                     ConfigFile = configFile,
                     GenerateConfigFile = true
@@ -41,7 +41,7 @@ namespace TextCycler.Tests
             try
             {
                 File.WriteAllText(configFile, "{}");
-                var p = new Program
+                var p = new TextCycler
                 {
                     ConfigFile = configFile,
                     GenerateConfigFile = true
@@ -72,7 +72,7 @@ namespace TextCycler.Tests
             // Arrange
             try
             {
-                var p = new Program
+                var p = new TextCycler
                 {
                     ConfigFile = configFile,
                     GenerateConfigFile = false

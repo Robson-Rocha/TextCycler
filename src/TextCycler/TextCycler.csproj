@@ -11,24 +11,26 @@
     <Authors>RobsonROX</Authors>
     <Product>TextCycler</Product>
     <Description>Utility to cycle messages in text files, useful for OBS Streaming</Description>
-    <PackageIconUrl>https://github.com/Robson-Rocha/TextCycler/blob/master/docs/textcycle-nuget.png?raw=true</PackageIconUrl>
-    <RepositoryUrl></RepositoryUrl>
+    <PackageIcon>TextCycler.png</PackageIcon>
+    <RepositoryUrl>https://github.com/robson-rocha/TextCycler</RepositoryUrl>
     <PackageProjectUrl>https://github.com/robson-rocha/TextCycler</PackageProjectUrl>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <Copyright>Copyright ©2020 Robson Rocha de Araújo</Copyright>
-    <PackageLicenseUrl>https://github.com/Robson-Rocha/TextCycler/blob/master/LICENSE</PackageLicenseUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageTags>tool, text, cycle, obs</PackageTags>
     <Company>Robson Rocha de Araújo</Company>
     <AssemblyVersion>1.0.4</AssemblyVersion>
-    <Version>$(AssemblyVersion)-pre</Version>
+    <Version>$(AssemblyVersion)-pre2</Version>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <EnableNETAnalyzers>true</EnableNETAnalyzers>
-    <CodeAnalysisRuleSet>.sonarlint\robson-rocha_textcyclercsharp.ruleset</CodeAnalysisRuleSet>    
+    <CodeAnalysisRuleSet>.sonarlint\robson-rocha_textcyclercsharp.ruleset</CodeAnalysisRuleSet>
+    <ApplicationIcon>TextCycler.ico</ApplicationIcon>    
 
   </PropertyGroup>
 
   <ItemGroup>
     <AdditionalFiles Include=".sonarlint\robson-rocha_textcycler\CSharp\SonarLint.xml" />
+    <None Include="TextCycler.png" Pack="true" PackagePath="\"/>
   </ItemGroup>
 
   <ItemGroup>

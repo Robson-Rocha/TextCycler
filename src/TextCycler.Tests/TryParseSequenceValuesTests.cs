@@ -17,7 +17,7 @@ namespace TextCycler.Tests
             {
                 // Arrange
                 CreateConfig();
-                var p = new Program();
+                var p = new TextCycler();
 
                 // Act
                 p.TryParseSequenceValues();
@@ -38,7 +38,7 @@ namespace TextCycler.Tests
             {
                 // Arrange
                 CreateConfig();
-                var p = new Program
+                var p = new TextCycler
                 {
                     SequenceValues = new[] { "0lorem" }
                 };
@@ -69,7 +69,7 @@ namespace TextCycler.Tests
             {
                 // Arrange
                 CreateConfig();
-                var p = new Program
+                var p = new TextCycler
                 {
                     SequenceValues = new[] { "0,lorem,ipsum" }
                 };
@@ -100,7 +100,7 @@ namespace TextCycler.Tests
             {
                 // Arrange
                 CreateConfig();
-                var p = new Program
+                var p = new TextCycler
                 {
                     SequenceValues = new[] { "lorem,ipsum" },
                     ConfigFile = configFile
@@ -133,7 +133,7 @@ namespace TextCycler.Tests
             {
                 // Arrange
                 CreateConfig();
-                var p = new Program
+                var p = new TextCycler
                 {
                     SequenceValues = new[] { "0,lorem", "1,ip\\,sum" },
                     ConfigFile = configFile

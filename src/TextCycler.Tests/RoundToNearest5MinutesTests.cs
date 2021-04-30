@@ -16,7 +16,7 @@ namespace TextCycler.Tests
             var expected = new DateTime(2021, 01, 01, 12, 05, 00);
 
             // Act
-            var actual = Program.RoundToNearest5Minutes(dt);
+            var actual = TextCycler.RoundToNearest5Minutes(dt);
 
             // Assert
             Assert.AreEqual(expected, actual);
@@ -30,7 +30,7 @@ namespace TextCycler.Tests
             var expected = new DateTime(2021, 01, 01, 12, 05, 00);
 
             // Act
-            var actual = Program.RoundToNearest5Minutes(dt);
+            var actual = TextCycler.RoundToNearest5Minutes(dt);
 
             // Assert
             Assert.AreEqual(expected, actual);

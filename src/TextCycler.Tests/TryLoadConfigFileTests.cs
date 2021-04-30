@@ -13,7 +13,7 @@ namespace TextCycler.Tests
         {
             // Arrange
             const string configFile = "notExists.json";
-            var p = new Program
+            var p = new TextCycler
             {
                 ConfigFile = configFile
             };
@@ -41,7 +41,7 @@ namespace TextCycler.Tests
             try
             {
                 File.WriteAllText(configFile, "{");
-                var p = new Program
+                var p = new TextCycler
                 {
                     ConfigFile = configFile
                 };
@@ -74,7 +74,7 @@ namespace TextCycler.Tests
             {
                 CreateConfig();
 
-                var p_act = new Program
+                var p_act = new TextCycler
                 {
                     ConfigFile = configFile
                 };
@@ -109,7 +109,7 @@ namespace TextCycler.Tests
 
                 UpdateConfig(config => config.NextTextIndex = null);
 
-                var p_act = new Program
+                var p_act = new TextCycler
                 {
                     ConfigFile = configFile
                 };
@@ -136,7 +136,7 @@ namespace TextCycler.Tests
 
                 UpdateConfig(config => config.SequencePositions = null);
 
-                var p_act = new Program
+                var p_act = new TextCycler
                 {
                     ConfigFile = configFile
                 };
@@ -163,7 +163,7 @@ namespace TextCycler.Tests
 
                 UpdateConfig(config => config.SequencePositions = new int[10]);
 
-                var p_act = new Program
+                var p_act = new TextCycler
                 {
                     ConfigFile = configFile
                 };
@@ -190,7 +190,7 @@ namespace TextCycler.Tests
 
                 UpdateConfig(config => config.Sequences = null);
 
-                var p_act = new Program
+                var p_act = new TextCycler
                 {
                     ConfigFile = configFile
                 };

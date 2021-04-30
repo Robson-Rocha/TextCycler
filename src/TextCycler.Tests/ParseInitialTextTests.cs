@@ -41,7 +41,7 @@ namespace TextCycler.Tests
                 // Arrange
                 CreateConfig();
                 string expected = "Lorem Ipsum";
-                var p = new Program(console: CreateConsoleMock((p, d) => expected))
+                var p = new TextCycler(console: CreateConsoleMock((p, d) => expected))
                 {
                     ConfigFile = configFile,
                     PromptForText = true
@@ -67,7 +67,7 @@ namespace TextCycler.Tests
             {
                 // Arrange
                 CreateConfig();
-                var p = new Program
+                var p = new TextCycler
                 {
                     ConfigFile = configFile,
                 };
@@ -92,7 +92,7 @@ namespace TextCycler.Tests
             {
                 // Arrange
                 CreateConfig();
-                var p = new Program
+                var p = new TextCycler
                 {
                     ConfigFile = configFile,
                     TextIndex = 3
@@ -121,7 +121,7 @@ namespace TextCycler.Tests
 
                 UpdateConfig(config => config.NextTextIndex = 3);
 
-                var p = new Program
+                var p = new TextCycler
                 {
                     ConfigFile = configFile
                 };
@@ -146,7 +146,7 @@ namespace TextCycler.Tests
             {
                 // Arrange
                 CreateConfig();
-                var p = new Program(console: CreateConsoleMock())
+                var p = new TextCycler(console: CreateConsoleMock())
                 {
                     ConfigFile = configFile,
                     Menu = true
@@ -177,7 +177,7 @@ namespace TextCycler.Tests
             {
                 // Arrange
                 CreateConfig();
-                var p = new Program(console: CreateConsoleMock(readCallback: null, mockConfig: mock =>
+                var p = new TextCycler(console: CreateConsoleMock(readCallback: null, mockConfig: mock =>
                     mock.Setup(c => c.Read("\r\nEnter the desired text index: ", It.IsAny<string>())).Returns("3")
                 ))
                 {
@@ -206,7 +206,7 @@ namespace TextCycler.Tests
                 // Arrange
                 CreateConfig();
                 string expected = "Lorem Ipsum";
-                var p = new Program(console: CreateConsoleMock(readCallback: null, mockConfig: mock => {
+                var p = new TextCycler(console: CreateConsoleMock(readCallback: null, mockConfig: mock => {
                     mock.Setup(c => c.Read("\r\nEnter the desired text index: ", It.IsAny<string>())).Returns("#");
                     mock.Setup(c => c.Read("Enter your text: ", It.IsAny<string>())).Returns(expected);
                 }))
@@ -235,7 +235,7 @@ namespace TextCycler.Tests
             {
                 // Arrange
                 CreateConfig();
-                var p = new Program(console: CreateConsoleMock(readCallback: null, mockConfig: mock => {
+                var p = new TextCycler(console: CreateConsoleMock(readCallback: null, mockConfig: mock => {
                     mock.Setup(c => c.Read("\r\nEnter the desired text index: ", It.IsAny<string>())).Returns("99");
                     mock.Setup(c => c.Read("\r\nEnter the desired text index: ", "99")).Returns("3");
                 }))

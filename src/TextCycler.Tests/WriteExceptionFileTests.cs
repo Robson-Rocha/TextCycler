@@ -18,8 +18,8 @@ namespace TextCycler.Tests
             try
             {
                 // Act
-                paths[0] = Program.WriteExceptionFile(ex);
-                paths[1] = Program.WriteExceptionFile(ex);
+                paths[0] = TextCycler.WriteExceptionFile(ex);
+                paths[1] = TextCycler.WriteExceptionFile(ex);
 
                 // Assert
                 Assert.IsTrue(File.Exists(paths[0]));
